@@ -121,7 +121,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public Optional<Integer> getDetectiveLocation(Piece.Detective detective){
 			// For all detectives, if Detective#piece == detective, then return the location in an Optional.of();
 			for (Player player: detectives) {
-				if(player.piece().isDetective()) return Optional.of(player.location());
+				if(player.piece().equals(detective)) return Optional.of(player.location());
 			}
 			return Optional.empty();
 		}
@@ -132,21 +132,42 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		 */
 		@Nonnull @Override
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-//			for(Piece player: piece)
+			ImmutableSet<Piece> player = getPlayers();
+			if(!player.contains(piece)) return Optional.empty();
+
+			// if the player is Mr X
+			else if(piece.isMrX()) return Optional.of(ticket -> mrX.tickets().getOrDefault(ticket, 0));
+
+			// if the player is detective
+			else if(piece.isDetective())
+				// get tickets of each detective
+				for(Player p: detectives) {
+					return Optional.of(ticket -> p.tickets().getOrDefault(ticket, 0));
+				}
+
 			return Optional.empty();
 		}
 
-		@Override
+		@Nonnull @Override
 		public ImmutableList<LogEntry> getMrXTravelLog(){
 			return log;
 		}
 
-		@Override
+		/**
+		 * @return the winner of this game; empty if the game has no winners yet
+		 * This is mutually exclusive with {@link #getAvailableMoves()}
+		 */
+		@Nonnull @Override
 		public ImmutableSet<Piece> getWinner() {
+
 			return null;
 		}
 
-		@Override
+		/**
+		 * @return the current available moves of the game.
+		 * This is mutually exclusive with {@link #getWinner()}
+		 */
+		@Nonnull @Override
 		public ImmutableSet<Move> getAvailableMoves() {
 			return null;
 		}
