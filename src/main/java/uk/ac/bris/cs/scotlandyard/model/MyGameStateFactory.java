@@ -156,9 +156,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		/**
 		 * @return the winner of this game; empty if the game has no winners yet
 		 * This is mutually exclusive with {@link #getAvailableMoves()}
+		 * 2 cases:
+		 * detective wins: when detective.location == mrX.location / mrX has no available moves
+		 * Mr X wins: when detective.location == mrX.location is not fulfilled after 13 rounds /
+		 *            detectives run out of tickets
 		 */
 		@Nonnull @Override
 		public ImmutableSet<Piece> getWinner() {
+
 
 			return null;
 		}
@@ -174,27 +179,38 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 
 
-//		private static Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
-//
-//			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
-//
-//			for(int destination : setup.graph.adjacentNodes(source)) {
-//				// TODO find out if destination is occupied by a detective
-//				//  if the location is occupied, don't add to the collection of moves to return
-//
-//				for(Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()) ) {
-//					// TODO find out if the player has the required tickets
-//					//  if it does, construct a SingleMove and add it the collection of moves to return
-//				}
-//
-//				// TODO consider the rules of secret moves here
-//				//  add moves to the destination via a secret ticket if there are any left with the player
-//			}
-//
-//			// TODO return the collection of moves
-//
-//			return null;
-//		}
+		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
+
+			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
+			HashSet<Move.SingleMove> singleMove = new HashSet<>();
+			Set<Integer> playerLocation = new HashSet<>();
+
+			// add player's location into the set
+			playerLocation.add(player.location());
+
+			for(int destination : setup.graph.adjacentNodes(source)) {
+				// TODO find out if destination is occupied by a detective
+				//  if the location is occupied, don't add to the collection of moves to return
+				if (playerLocation.contains(destination)) continue;
+
+				for(ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()) ) {
+					// TODO find out if the player has the required tickets
+					//  if it does, construct a SingleMove and add it the collection of moves to return
+					if(player.has(t.requiredTicket())) {
+						Move.SingleMove m = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
+						singleMove.add(m);
+					}
+				}
+
+				// TODO consider the rules of secret moves here
+				//  add moves to the destination via a secret ticket if there are any left with the player
+
+			}
+
+			// TODO return the collection of moves
+
+			return singleMove;
+		}
 
 		@Override
 		public GameState advance(Move move) {
