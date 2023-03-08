@@ -23,10 +23,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
 	private final class MyGameState implements GameState {
 		private GameSetup setup;
 		private ImmutableSet<Piece> remaining;
+
+		// hold the travel log and count the moves Mr has taken
 		private ImmutableList<LogEntry> log;
+
+		// hold the MrX player
 		private Player mrX;
+
+		// hold the detectives
 		private List<Player> detectives;
+
+		// hold the currently possible/available moves
 		private ImmutableSet<Move> moves;
+
+		// hold the current winner(s)
 		private ImmutableSet<Piece> winner;
 
 		private MyGameState(
@@ -45,17 +55,30 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			// checks whether the parameters passed are not null
 			if(setup.moves.isEmpty()) throw new IllegalArgumentException("Moves is empty!");
+			if(setup.graph.edges().isEmpty()) throw new IllegalArgumentException("Graph is empty!");
+			if(!detectives.isEmpty()) throw new IllegalArgumentException("There are no detectives!");
+			if(!mrX.isMrX()) throw new IllegalArgumentException("Mr X is empty!");
+			if(!mrX.piece().webColour().equals("#000")) throw new IllegalArgumentException("Mr X is not black!");
+
+			// checks properties of players (detectives)
+
+			// check duplicates of detective
+
 		}
 
 		// GETTERS
 
-		@Override public GameSetup getSetup(){ return setup; }
+		// returns ths current game setup
+		@Nonnull @Override
+		public GameSetup getSetup(){ return setup; }
 
-		@Override
+		//
+		@Nonnull @Override
 		public ImmutableSet<Piece> getPlayers() {
 			return null;
 		}
-		@Override public ImmutableList<LogEntry> getMrXTravelLog(){
+		@Nonnull @Override
+		public ImmutableList<LogEntry> getMrXTravelLog(){
 			return log;
 		}
 		@Override public Optional<Integer> getDetectiveLocation(Detective detective){
