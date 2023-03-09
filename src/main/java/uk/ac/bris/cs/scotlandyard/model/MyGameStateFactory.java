@@ -44,7 +44,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Piece> winner;
 
 		// calls all players
-		private ImmutableSet<Player> allPlayers;
+		private ImmutableSet<Piece> allPlayers;
 
 		private MyGameState(
 				final GameSetup setup,
@@ -168,8 +168,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull @Override
 		public ImmutableSet<Piece> getWinner() {
 
-
-			return null;
+			return ImmutableSet.of();
 		}
 
 		/**
@@ -181,13 +180,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// initialise an empty set to store the moves
 			HashSet<Move> moves = new HashSet<>();
 
-			for(Player p: allPlayers) {
-				// check if got remaining moves
-				if(remaining.contains(p.piece())) {
-					moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
-					moves.addAll(makeDoubleMoves(setup, detectives, p, p.location(), log));
-				}
-			}
+//			for(Player p: allPlayers) {
+//				// check if got remaining moves
+//				if(remaining.contains(p.piece())) {
+//					moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
+//					moves.addAll(makeDoubleMoves(setup, detectives, p, p.location(), log));
+//				}
+//			}
 			return ImmutableSet.copyOf(moves);
 		}
 
