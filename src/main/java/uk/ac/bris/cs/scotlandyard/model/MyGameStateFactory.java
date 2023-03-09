@@ -185,7 +185,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				// check if got remaining moves
 				if(remaining.contains(p.piece())) {
 					moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
-					moves.addAll(makeDoubleMoves(setup, detectives, p, p.location()));
+					moves.addAll(makeDoubleMoves(setup, detectives, p, p.location(), log));
 				}
 			}
 			return ImmutableSet.copyOf(moves);
@@ -230,7 +230,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// TODO return the collection of moves
 			return singleMove;
 		}
-		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
+		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log){
 
 			// create an empty collection of some sort, say, HashSet, to store all the DoubleMove we generate
 			HashSet<Move.DoubleMove> doubleMove = new HashSet<>();
@@ -240,46 +240,49 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			playerLocation1.add(player.location());
 
 			// check if player has ticket1 and if the player can go to destination1
-			for(int destination1 : setup.graph.adjacentNodes(source)) {
-				if (playerLocation1.contains(destination1)) continue;
-				for (ScotlandYard.Transport t1 : setup.graph.edgeValueOrDefault(source, destination1, ImmutableSet.of())) {
-					if(player.has(t1.requiredTicket())) {
+			// check if remaining log size is more than 2
+			if (setup.moves.size() - log.size() >= 2){
+				for(int destination1 : setup.graph.adjacentNodes(source)) {
+					if (playerLocation1.contains(destination1)) continue;
+					for (ScotlandYard.Transport t1 : setup.graph.edgeValueOrDefault(source, destination1, ImmutableSet.of())) {
+						if(player.has(t1.requiredTicket())) {
 
-						// check if player has ticket2 and if player can go to destination2
-						for (int destination2 : setup.graph.adjacentNodes(source)) {
-							if (playerLocation1.contains(destination2)) continue;
-							for (ScotlandYard.Transport t2 : setup.graph.edgeValueOrDefault(destination1, destination2, ImmutableSet.of())) {
-								if(player.has(t2.requiredTicket())) {
+							// check if player has ticket2 and if player can go to destination2
+							for (int destination2 : setup.graph.adjacentNodes(source)) {
+								if (playerLocation1.contains(destination2)) continue;
+								for (ScotlandYard.Transport t2 : setup.graph.edgeValueOrDefault(destination1, destination2, ImmutableSet.of())) {
+									if(player.has(t2.requiredTicket())) {
 
-									// check if both ticket1 and ticket2 are the same mode of transportation
-									if (t2.requiredTicket() == t1.requiredTicket()) {
-										if (player.hasAtLeast(t2.requiredTicket(), 2)) {
-											Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
-											doubleMove.add(move);
+										// check if both ticket1 and ticket2 are the same mode of transportation
+										if (t2.requiredTicket() == t1.requiredTicket()) {
+											if (player.hasAtLeast(t2.requiredTicket(), 2)) {
+												Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
+												doubleMove.add(move);
+											}
+										} else {
+											if (player.hasAtLeast(t2.requiredTicket(), 2)) {
+												Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
+												doubleMove.add(move);
+											}
 										}
-									} else {
-										if (player.hasAtLeast(t2.requiredTicket(), 2)) {
-											Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
-											doubleMove.add(move);
+									}
+									// when player has secret ticket
+									if (player.has(ScotlandYard.Ticket.SECRET)) {
+										// combination of ticket1 + secret ticket
+										if(player.has(t1.requiredTicket())){
+											Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, ScotlandYard.Ticket.SECRET, destination2);
+											doubleMove.add(secret);
 										}
-									}
-								}
-								// when player has secret ticket
-								if (player.has(ScotlandYard.Ticket.SECRET)) {
-									// combination of ticket1 + secret ticket
-									if(player.has(t1.requiredTicket())){
-										Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, ScotlandYard.Ticket.SECRET, destination2);
-										doubleMove.add(secret);
-									}
-									// combination of secret ticket + ticket2
-									if(player.has(t2.requiredTicket())){
-										Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, t2.requiredTicket(), destination2);
-										doubleMove.add(secret);
-									}
-									// combination of 2 secret tickets
-									if(player.hasAtLeast(ScotlandYard.Ticket.SECRET, 2)){
-										Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, ScotlandYard.Ticket.SECRET, destination2);
-										doubleMove.add(secret);
+										// combination of secret ticket + ticket2
+										if(player.has(t2.requiredTicket())){
+											Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, t2.requiredTicket(), destination2);
+											doubleMove.add(secret);
+										}
+										// combination of 2 secret tickets
+										if(player.hasAtLeast(ScotlandYard.Ticket.SECRET, 2)){
+											Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, ScotlandYard.Ticket.SECRET, destination2);
+											doubleMove.add(secret);
+										}
 									}
 								}
 							}
