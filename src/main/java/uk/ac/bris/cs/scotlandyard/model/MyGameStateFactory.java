@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.*;
 
 import javax.annotation.Nonnull;
+import javax.crypto.spec.PSource;
 
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
@@ -41,6 +42,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		// hold the current winner(s)
 		private ImmutableSet<Piece> winner;
+
+		// calls all players
+		private ImmutableSet<Piece> allPlayers;
 
 		private MyGameState(
 				final GameSetup setup,
@@ -107,13 +111,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull @Override
 		public ImmutableSet<Piece> getPlayers() {
 
-			Set<Piece> allPlayers = new HashSet<>();
+			Set<Piece> players = new HashSet<>();
 			for(Player detective : detectives) {
-				allPlayers.add(detective.piece());
+				players.add(detective.piece());
 			}
-			allPlayers.add(mrX.piece());
+			players.add(mrX.piece());
 
-			return ImmutableSet.copyOf(allPlayers);
+			return ImmutableSet.copyOf(players);
 		}
 
 		// get location of detective
@@ -174,9 +178,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		 */
 		@Nonnull @Override
 		public ImmutableSet<Move> getAvailableMoves() {
-			HashSet<Move> move = new HashSet<>();
+			// initialise an empty set to store the moves
+			HashSet<Move> moves = new HashSet<>();
 
-			return ImmutableSet.copyOf(move);
+			for(Player p: allPlayers) {
+				// check if got remaining moves
+				if(remaining.contains(p.piece())) {
+					moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
+					moves.addAll(makeDoubleMoves(setup, detectives, p, p.location()));
+				}
+			}
+			return ImmutableSet.copyOf(moves);
 		}
 
 		@Override
@@ -218,7 +230,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// TODO return the collection of moves
 			return singleMove;
 		}
-		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> mrX, Player player, int source){
+		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
 
 			// create an empty collection of some sort, say, HashSet, to store all the DoubleMove we generate
 			HashSet<Move.DoubleMove> doubleMove = new HashSet<>();
