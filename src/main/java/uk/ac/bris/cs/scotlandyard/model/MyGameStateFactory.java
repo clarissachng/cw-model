@@ -44,7 +44,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Piece> winner;
 
 		// calls all players
-		private ImmutableSet<Piece> allPlayers;
+		private ImmutableSet<Player> allPlayers;
 
 		private MyGameState(
 				final GameSetup setup,
@@ -199,7 +199,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
 
-			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
+			// create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
 			HashSet<Move.SingleMove> singleMove = new HashSet<>();
 			Set<Integer> playerLocation = new HashSet<>();
 
@@ -207,12 +207,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			playerLocation.add(player.location());
 
 			for(int destination : setup.graph.adjacentNodes(source)) {
-				// TODO find out if destination is occupied by a detective
+				// find out if destination is occupied by a detective
 				//  if the location is occupied, don't add to the collection of moves to return
 				if (playerLocation.contains(destination)) continue;
 
 				for(ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()) ) {
-					// TODO find out if the player has the required tickets
+					// find out if the player has the required tickets
 					//  if it does, construct a SingleMove and add it the collection of moves to return
 					if(player.has(t.requiredTicket())) {
 						Move.SingleMove move = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
@@ -220,14 +220,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 				}
 
-				// TODO consider the rules of secret moves here
-				//  add moves to the destination via a secret ticket if there are any left with the player
+				// consider the rules of secret moves here
+				// add moves to the destination via a secret ticket if there are any left with the player
 				if(player.has(ScotlandYard.Ticket.SECRET)) {
 					Move.SingleMove secret = new Move.SingleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination);
 					singleMove.add(secret);
 				}
 			}
-			// TODO return the collection of moves
+			// return the collection of moves
 			return singleMove;
 		}
 		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log){
