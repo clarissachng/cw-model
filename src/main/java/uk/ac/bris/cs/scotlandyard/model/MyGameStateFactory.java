@@ -44,7 +44,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Piece> winner;
 
 		// calls all players
-		private ImmutableSet<Piece> allPlayers;
+		private ImmutableSet<Player> allPlayers;
 
 		private MyGameState(
 				final GameSetup setup,
@@ -190,7 +190,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(moves);
 		}
 
-		@Override
+		@Nonnull @Override
 		public GameState advance(Move move) {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			else return null;
