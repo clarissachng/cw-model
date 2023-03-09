@@ -113,7 +113,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 			allPlayers.add(mrX.piece());
 
-			return (ImmutableSet<Piece>) allPlayers;
+			return ImmutableSet.copyOf(allPlayers);
 		}
 
 		// get location of detective
@@ -174,10 +174,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		 */
 		@Nonnull @Override
 		public ImmutableSet<Move> getAvailableMoves() {
-			return null;
+			HashSet<Move> move = new HashSet<>();
+
+			return ImmutableSet.copyOf(move);
 		}
 
-
+		@Override
+		public GameState advance(Move move) {
+			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
+			else return null;
+		}
 
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
 
@@ -197,26 +203,80 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					// TODO find out if the player has the required tickets
 					//  if it does, construct a SingleMove and add it the collection of moves to return
 					if(player.has(t.requiredTicket())) {
-						Move.SingleMove m = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
-						singleMove.add(m);
+						Move.SingleMove move = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
+						singleMove.add(move);
 					}
 				}
 
 				// TODO consider the rules of secret moves here
 				//  add moves to the destination via a secret ticket if there are any left with the player
-
+				if(player.has(ScotlandYard.Ticket.SECRET)) {
+					Move.SingleMove secret = new Move.SingleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination);
+					singleMove.add(secret);
+				}
 			}
-
 			// TODO return the collection of moves
-
 			return singleMove;
 		}
+		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> mrX, Player player, int source){
 
-		@Override
-		public GameState advance(Move move) {
-			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
-			else return null;
+			// create an empty collection of some sort, say, HashSet, to store all the DoubleMove we generate
+			HashSet<Move.DoubleMove> doubleMove = new HashSet<>();
+			Set<Integer> playerLocation1 = new HashSet<>();
+
+			// add player's location into the set
+			playerLocation1.add(player.location());
+
+			// check if player has ticket1 and if the player can go to destination1
+			for(int destination1 : setup.graph.adjacentNodes(source)) {
+				if (playerLocation1.contains(destination1)) continue;
+				for (ScotlandYard.Transport t1 : setup.graph.edgeValueOrDefault(source, destination1, ImmutableSet.of())) {
+					if(player.has(t1.requiredTicket())) {
+
+						// check if player has ticket2 and if player can go to destination2
+						for (int destination2 : setup.graph.adjacentNodes(source)) {
+							if (playerLocation1.contains(destination2)) continue;
+							for (ScotlandYard.Transport t2 : setup.graph.edgeValueOrDefault(destination1, destination2, ImmutableSet.of())) {
+								if(player.has(t2.requiredTicket())) {
+
+									// check if both ticket1 and ticket2 are the same mode of transportation
+									if (t2.requiredTicket() == t1.requiredTicket()) {
+										if (player.hasAtLeast(t2.requiredTicket(), 2)) {
+											Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
+											doubleMove.add(move);
+										}
+									} else {
+										if (player.hasAtLeast(t2.requiredTicket(), 2)) {
+											Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
+											doubleMove.add(move);
+										}
+									}
+								}
+								// when player has secret ticket
+								if (player.has(ScotlandYard.Ticket.SECRET)) {
+									// combination of ticket1 + secret ticket
+									if(player.has(t1.requiredTicket())){
+										Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, ScotlandYard.Ticket.SECRET, destination2);
+										doubleMove.add(secret);
+									}
+									// combination of secret ticket + ticket2
+									if(player.has(t2.requiredTicket())){
+										Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, t2.requiredTicket(), destination2);
+										doubleMove.add(secret);
+									}
+									// combination of 2 secret tickets
+									if(player.hasAtLeast(ScotlandYard.Ticket.SECRET, 2)){
+										Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, ScotlandYard.Ticket.SECRET, destination2);
+										doubleMove.add(secret);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			// return the collection of moves
+			return doubleMove;
 		}
-
 	}
 }
