@@ -180,6 +180,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// initialise an empty set to store the moves
 			HashSet<Move> moves = new HashSet<>();
 
+			// FIGURE OUT WHY CANNOT USE ALL PLAYERS
 //			for(Player p: allPlayers) {
 //				// check if got remaining moves
 //				if(remaining.contains(p.piece())) {
@@ -190,6 +191,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(moves);
 		}
 
+		// FIGURE OUT THIS SHIT
 		@Nonnull @Override
 		public GameState advance(Move move) {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
@@ -240,6 +242,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			// check if player has ticket1 and if the player can go to destination1
 			// check if remaining log size is more than 2
+
+			// 	REMEMBER!!!!!!!!!!!!!!!!!!!!!!!!! NEED TO GET THE REMAINING STEPS
 			if (setup.moves.size() - log.size() >= 2){
 				for(int destination1 : setup.graph.adjacentNodes(source)) {
 					if (playerLocation1.contains(destination1)) continue;
