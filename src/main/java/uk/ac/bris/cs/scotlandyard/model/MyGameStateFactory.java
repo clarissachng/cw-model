@@ -180,18 +180,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					return ImmutableSet.of(detective.piece());
 				}
 
-				// X win: when detectives has no more moves
+				// mr xwins when detectives has no more moves
 				if (makeSingleMoves(setup, detectives, detective, detective.location()).isEmpty()){
 					return ImmutableSet.of(mrX.piece());
 				}
 			}
 
-			// X win: when mr x travel log is completely full
+			// mr x wins when mr x travel log is completely full
 			if (getMrXTravelLog().size() == setup.moves.size()){
 				return ImmutableSet.of(mrX.piece());
 			}
-
-
 			return ImmutableSet.of();
 		}
 
@@ -209,25 +207,21 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				return ImmutableSet.of();
 			}
 
-			// case for detectives
 			for(Player detective: detectives) {
+				// case for detectives
 				if(remaining.contains(detective.piece())) {
-					moves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
+//					if(detective.has(ScotlandYard.requiredTickets())) {
+						moves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
+//					}
 				}
-			}
 
-			if(remaining.contains(mrX.piece())) {
-				moves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
-				moves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location(), log));
-			}
+				// case for mr x
+				if(remaining.contains(mrX.piece())) {
+					moves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
+					moves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location(), log));
+				}
 
-//			for(Player p: allPlayers) {
-//				// check if got remaining moves
-//				if(remaining.contains(p.piece())) {
-//					moves.addAll(makeSingleMoves(setup, detectives, p, p.location()));
-//					moves.addAll(makeDoubleMoves(setup, detectives, p, p.location(), log));
-//				}
-//			}
+			}
 			return ImmutableSet.copyOf(moves);
 		}
 
@@ -300,7 +294,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Set<Integer> playerLocation = new HashSet<>();
 
 			// add player's location into the set
-			playerLocation.add(player.location());
+//			playerLocation.add(player.location());
+			for(Player detective: detectives) playerLocation.add(detective.location());
 
 			for(int destination : setup.graph.adjacentNodes(source)) {
 				// find out if destination is occupied by a detective
@@ -338,8 +333,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// check if player has ticket1 and if the player can go to destination1
 			// check if remaining log size is more than 2
 
-			// 	REMEMBER!!!!!!!!!!!!!!!!!!!!!!!!! NEED TO GET THE REMAINING STEPS
-			if (setup.moves.size() - log.size() >= 2){
+			if (player.has(ScotlandYard.Ticket.DOUBLE) && (setup.moves.size() - log.size() >= 2)){
 				for(int destination1 : setup.graph.adjacentNodes(source)) {
 					if (playerLocation1.contains(destination1)) continue;
 					for (ScotlandYard.Transport t1 : setup.graph.edgeValueOrDefault(source, destination1, ImmutableSet.of())) {
