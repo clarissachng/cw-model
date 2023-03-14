@@ -180,6 +180,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// initialise an empty set to store the moves
 			HashSet<Move> moves = new HashSet<>();
 
+			// if there's a winner, there will be no available moves
+			if (!getWinner().isEmpty()) {
+				return ImmutableSet.of();
+			}
+
 			// FIGURE OUT WHY CANNOT USE ALL PLAYERS
 //			for(Player p: allPlayers) {
 //				// check if got remaining moves
