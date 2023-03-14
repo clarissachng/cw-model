@@ -235,7 +235,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						// check if Mr X's location is revealed
 						if(setup.moves.get(log.size())) {
 							// revealed location
-							updateLog.add(LogEntry.reveal(move.ticket, move.destination);
+							updateLog.add(LogEntry.reveal(move.ticket, move.destination));
 						}
 						// hidden location
 						else updateLog.add(LogEntry.hidden(move.ticket));
@@ -268,7 +268,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					return updatePlayer;
 				}
 //				Player updatePlayer = move.accept(visitor);
-			}
+			};
 			return new MyGameState(setup, remaining, ImmutableList.copyOf(updateLog), mrX, detectives);
 		}
 
