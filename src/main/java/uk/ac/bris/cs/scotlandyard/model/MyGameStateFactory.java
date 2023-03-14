@@ -67,7 +67,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			// initialise winner and moves
 			this.winner = getWinner();
-			this.moves = getAvailableMoves();
+			this.moves = ImmutableSet.of();;
 
 			// checks whether the parameters passed are not null
 			if(setup.moves.isEmpty()) throw new IllegalArgumentException("Moves is empty!");
@@ -191,11 +191,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				return ImmutableSet.of(mrX.piece());
 			}
 
+
 			return ImmutableSet.of();
 		}
 
 		/**
-		 * @return the current available moves of the game.
+		 * return the current available moves of the game.
 		 * This is mutually exclusive with {@link #getWinner()}
 		 */
 		@Nonnull @Override
@@ -208,7 +209,18 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				return ImmutableSet.of();
 			}
 
-			// FIGURE OUT WHY CANNOT USE ALL PLAYERS
+			// case for detectives
+			for(Player detective: detectives) {
+				if(remaining.contains(detective.piece())) {
+					moves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
+				}
+			}
+
+			if(remaining.contains(mrX.piece())) {
+				moves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
+				moves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location(), log));
+			}
+
 //			for(Player p: allPlayers) {
 //				// check if got remaining moves
 //				if(remaining.contains(p.piece())) {
