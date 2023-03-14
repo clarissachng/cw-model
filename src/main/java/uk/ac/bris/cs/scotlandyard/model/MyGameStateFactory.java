@@ -180,7 +180,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					return ImmutableSet.of(detective.piece());
 				}
 
-				// mr xwins when detectives has no more moves
+				// mr x wins when detectives has no more moves
 				if (makeSingleMoves(setup, detectives, detective, detective.location()).isEmpty()){
 					return ImmutableSet.of(mrX.piece());
 				}
@@ -210,9 +210,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			for(Player detective: detectives) {
 				// case for detectives
 				if(remaining.contains(detective.piece())) {
-//					if(detective.has(ScotlandYard.requiredTickets())) {
-						moves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
-//					}
+					moves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
 				}
 
 				// case for mr x
@@ -278,7 +276,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return new MyGameState(setup, remaining, ImmutableList.copyOf(updateLog), mrX, detectives);
 		}
 
-		/* --------------- HELPER FUNCTION   -----------*/
+		/* --------------- HELPER FUNCTIONS   ----------- */
+
 		// gets the player from its piece (detective/ Mr X)
 		private Player getCurrentPlayer(Piece piece){
 			for (Player p: allPlayers) {
@@ -328,7 +327,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Set<Integer> playerLocation1 = new HashSet<>();
 
 			// add player's location into the set
-			playerLocation1.add(player.location());
+			for (Player detective: detectives) playerLocation1.add(detective.location());
 
 			// check if player has ticket1 and if the player can go to destination1
 			// check if remaining log size is more than 2
