@@ -167,6 +167,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		 */
 		@Nonnull @Override
 		public ImmutableSet<Piece> getWinner() {
+//			HashSet<Piece> winner = new HashSet<>();
+			for (Player detective : detectives){
+				// Detective wins if MrX is captured
+				if (detective.location() == mrX.location()){
+					return ImmutableSet.of(detective.piece());
+				}
+
+				// Detective wins if MrX is cornered
+				if (makeSingleMoves(setup, detectives, mrX, mrX.location()).isEmpty() &&
+				    makeDoubleMoves(setup, detectives, mrX, mrX.location(),log).isEmpty()){
+					return ImmutableSet.of(detective.piece());
+				}
+
+				// X win: when detectives has no more moves
+				if (makeSingleMoves(setup, detectives, detective, detective.location()).isEmpty()){
+					return ImmutableSet.of(mrX.piece());
+				}
+			}
+
+			// X win: when mr x travel log is completely full
+			if (getMrXTravelLog().size() == setup.moves.size()){
+				return ImmutableSet.of(mrX.piece());
+			}
 
 			return ImmutableSet.of();
 		}
@@ -196,11 +219,66 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(moves);
 		}
 
-		// FIGURE OUT THIS SHIT
+		// return a new state from the current GameState and a provided Move
 		@Nonnull @Override
 		public GameState advance(Move move) {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
-			else return null;
+
+			List<LogEntry> updateLog = new ArrayList<>(log);
+			Player currentPlayer = getCurrentPlayer(move.commencedBy());
+
+			Move.Visitor<Player> visitor = new Move.Visitor<Player>() {
+				@Override
+				public Player visit(Move.SingleMove move) {
+					// when the current player is Mr X
+					if(currentPlayer.isMrX()) {
+						// check if Mr X's location is revealed
+						if(setup.moves.get(log.size())) {
+							// revealed location
+							updateLog.add(LogEntry.reveal(move.ticket, move.destination);
+						}
+						// hidden location
+						else updateLog.add(LogEntry.hidden(move.ticket));
+					}
+					else {
+						mrX = mrX.give(move.tickets());
+					}
+					return currentPlayer.use(move.ticket).at(move.destination);
+				}
+
+				@Override
+				public Player visit(Move.DoubleMove move) {
+					Player updatePlayer = currentPlayer.use(move.tickets()).at(move.destination2);
+
+					// moving from source to destination1
+					if (setup.moves.get(log.size())) {
+						updateLog.add(LogEntry.reveal(move.ticket1, move.destination1));
+					}
+					else {
+						updateLog.add(LogEntry.hidden(move.ticket1));
+					}
+
+					// moving from destination1 to destination2
+					if (setup.moves.get(updateLog.size())) {
+						updateLog.add(LogEntry.reveal(move.ticket2, move.destination2));
+					}
+					else {
+						updateLog.add(LogEntry.hidden(move.ticket2));
+					}
+					return updatePlayer;
+				}
+//				Player updatePlayer = move.accept(visitor);
+			}
+			return new MyGameState(setup, remaining, ImmutableList.copyOf(updateLog), mrX, detectives);
+		}
+
+		/* --------------- HELPER FUNCTION   -----------*/
+		// gets the player from its piece (detective/ Mr X)
+		private Player getCurrentPlayer(Piece piece){
+			for (Player p: allPlayers) {
+				if(p.piece().equals(piece)) return p;
+			}
+			return null;
 		}
 
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
