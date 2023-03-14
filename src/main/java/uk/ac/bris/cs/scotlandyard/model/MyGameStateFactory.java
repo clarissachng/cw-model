@@ -67,7 +67,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			// initialise winner and moves
 			this.winner = getWinner();
-			this.moves = ImmutableSet.of();;
+			this.moves = ImmutableSet.of();
 
 			// checks whether the parameters passed are not null
 			if(setup.moves.isEmpty()) throw new IllegalArgumentException("Moves is empty!");
@@ -227,7 +227,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull @Override
 		public GameState advance(Move move) {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
-
 			List<LogEntry> updateLog = new ArrayList<>(log);
 			Player currentPlayer = getCurrentPlayer(move.commencedBy());
 
