@@ -218,7 +218,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					moves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
 					moves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location(), log));
 				}
-
 			}
 			return ImmutableSet.copyOf(moves);
 		}
@@ -285,14 +284,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return null;
 		}
 
+		public static Integer getDestination (Move m) {
+			return m.accept(new Move.Visitor<>() {
+
+				@Override
+				public Integer visit(Move.SingleMove move) {
+					return move.destination;
+				}
+
+				@Override
+				public Integer visit(Move.DoubleMove move) {
+					return move.destination2;
+				}
+			});
+		}
+
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
 
 			// create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
-			HashSet<Move.SingleMove> singleMove = new HashSet<>();
+//			HashSet<Move.SingleMove> singleMove = new HashSet<>();
 			Set<Integer> playerLocation = new HashSet<>();
+			Set<Move.SingleMove> singleMove = new HashSet<>();
 
 			// add player's location into the set
-//			playerLocation.add(player.location());
 			for(Player detective: detectives) playerLocation.add(detective.location());
 
 			for(int destination : setup.graph.adjacentNodes(source)) {
@@ -319,67 +333,34 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// return the collection of moves
 			return singleMove;
 		}
+
 		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log){
 
 			// create an empty collection of some sort, say, HashSet, to store all the DoubleMove we generate
-			HashSet<Move.DoubleMove> doubleMove = new HashSet<>();
-			Set<Integer> playerLocation1 = new HashSet<>();
+			Set<Move.DoubleMove> doubleMove = new HashSet<>();
+			Set<Move.SingleMove> singleMove = makeSingleMoves(setup, detectives, player, source);
 
-			// add player's location into the set
-			for (Player detective: detectives) playerLocation1.add(detective.location());
+			// integer to store available moves
+			int availableMoves = setup.moves.size() - log.size();
 
-			// check if player has ticket1 and if the player can go to destination1
-			// check if remaining log size is more than 2
+			// check if available moves >= 2 and if player has double tix
+			if (player.has(ScotlandYard.Ticket.DOUBLE) && (availableMoves >= 2)){
+				for(Move.SingleMove move1: singleMove) {
+					// player used a tix -> ticketvalue - 1
+					int destination1 = getDestination(move1);
+					Player player2 =  player.use(move1.ticket).at(destination1);
+					Set<Move.SingleMove> secondMove = makeSingleMoves(setup, detectives, player2, destination1);
 
-			if (player.has(ScotlandYard.Ticket.DOUBLE) && (setup.moves.size() - log.size() >= 2)){
-				for(int destination1 : setup.graph.adjacentNodes(source)) {
-					if (playerLocation1.contains(destination1)) continue;
-					for (ScotlandYard.Transport t1 : setup.graph.edgeValueOrDefault(source, destination1, ImmutableSet.of())) {
-						if(player.has(t1.requiredTicket())) {
-
-							// check if player has ticket2 and if player can go to destination2
-							for (int destination2 : setup.graph.adjacentNodes(source)) {
-								if (playerLocation1.contains(destination2)) continue;
-								for (ScotlandYard.Transport t2 : setup.graph.edgeValueOrDefault(destination1, destination2, ImmutableSet.of())) {
-									if(player.has(t2.requiredTicket())) {
-
-										// check if both ticket1 and ticket2 are the same mode of transportation
-										if (t2.requiredTicket() == t1.requiredTicket()) {
-											if (player.hasAtLeast(t2.requiredTicket(), 2)) {
-												Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
-												doubleMove.add(move);
-											}
-										} else {
-											if (player.hasAtLeast(t2.requiredTicket(), 2)) {
-												Move.DoubleMove move = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, t2.requiredTicket(), destination2);
-												doubleMove.add(move);
-											}
-										}
-									}
-									// when player has secret ticket
-									if (player.has(ScotlandYard.Ticket.SECRET)) {
-										// combination of ticket1 + secret ticket
-										if(player.has(t1.requiredTicket())){
-											Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, t1.requiredTicket(), destination1, ScotlandYard.Ticket.SECRET, destination2);
-											doubleMove.add(secret);
-										}
-										// combination of secret ticket + ticket2
-										if(player.has(t2.requiredTicket())){
-											Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, t2.requiredTicket(), destination2);
-											doubleMove.add(secret);
-										}
-										// combination of 2 secret tickets
-										if(player.hasAtLeast(ScotlandYard.Ticket.SECRET, 2)){
-											Move.DoubleMove secret = new Move.DoubleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination1, ScotlandYard.Ticket.SECRET, destination2);
-											doubleMove.add(secret);
-										}
-									}
-								}
-							}
-						}
+					// player making the second move
+					for(Move.SingleMove move2: secondMove) {
+						int destination2 = getDestination(move2);
+						Move.DoubleMove double1 = new Move.DoubleMove(player.piece(), source, move1.ticket, destination1, move2.ticket, destination2);
+						doubleMove.add(double1);
 					}
 				}
 			}
+//			// if player does not have enough ticket
+//			if()
 			// return the collection of moves
 			return doubleMove;
 		}
