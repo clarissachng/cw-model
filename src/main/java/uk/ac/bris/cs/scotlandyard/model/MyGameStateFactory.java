@@ -227,6 +227,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public GameState advance(Move move) {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			List<LogEntry> updateLog = new ArrayList<>(log);
+			List<Player> updateDetective = new ArrayList<>();
+			Player updateMrX;
+			List<Piece> oldRemaining = new ArrayList<>(remaining);
+			List<Piece> updateRemaining = new ArrayList<>();
 			Player currentPlayer = getCurrentPlayer(move.commencedBy());
 
 			Move.Visitor<Player> visitor = new Move.Visitor<Player>() {
@@ -234,15 +238,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				public Player visit(Move.SingleMove move) {
 					// when the current player is Mr X
 					if(currentPlayer.isMrX()) {
-						// check if Mr X's location is revealed
+						// check if mr x's moves are revealed
 						if(setup.moves.get(log.size())) {
-							// revealed location
+							// revealed moves
 							updateLog.add(LogEntry.reveal(move.ticket, move.destination));
 						}
-						// hidden location
+						// hidden moves
 						else updateLog.add(LogEntry.hidden(move.ticket));
 					}
 					else {
+						// give mr x with new ticket from detectives
 						mrX = mrX.give(move.tickets());
 					}
 					return currentPlayer.use(move.ticket).at(move.destination);
@@ -269,8 +274,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 					return updatePlayer;
 				}
-//				Player updatePlayer = move.accept(visitor);
 			};
+
+			Player updatePlayer = move.accept(visitor);
+
+			// update the new detectives if the updated player is a detective
+			for (Player player : detectives){
+				if (player.piece() == updatePlayer.piece()){
+					updateDetective.add(updatePlayer);
+				}
+//				else {
+//					updateDetective.add(player);
+//				}
+			}
+
+			// check if updatePlayer is mrX
+			if (updatePlayer.isMrX()){
+				updateMrX = updatePlayer;
+			}
+			else {
+				updateMrX = mrX;
+			}
+
+
 			return new MyGameState(setup, remaining, ImmutableList.copyOf(updateLog), mrX, detectives);
 		}
 
@@ -299,6 +325,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 		}
 
+//		public boolean noDetectiveHasMove (List<Player> detectives){
+//			for (Player detective : detectives){
+//				// check if there are available moves for any of the detectives
+//				if (!makeSingleMoves(setup, detectives, detective, detective.location()).isEmpty()){
+//					return false;
+//				}
+//			}
+//			return true;
+//		}
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
 
 			// create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
