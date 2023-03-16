@@ -286,30 +286,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					updatedRemaining.add(everyone.piece());
 				}
 			}
-//
-//			Player updatedPlayer = move.accept(visitor);
-//
-//			// update the new detectives if the updated player is a detective
-//			for (Player player : detectives){
-//				if (player.piece() == updatedPlayer.piece()){
-//					updatedDetective.add(updatedPlayer);
-//				}
-//				else {
-//					updatedDetective.add(player);
-//				}
-//			}
-//
-//			// check if updatePlayer is mrX
-//			if (updatedPlayer.isMrX()){
-//				updatedMrX = updatedPlayer;
-//			}
-//			else {
-//				updatedMrX = mrX;
 			return null;
-		};
-//
 
-//			return new MyGameState(setup, remaining, ImmutableList.copyOf(updatedLog), mrX, detectives);
 		}
 
 		/* --------------- HELPER FUNCTIONS   ----------- */
@@ -322,7 +300,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return null;
 		}
 
-		public static Integer getDestination (Move m) {
+		public static Integer getDestination(Move m) {
 			return m.accept(new Move.Visitor<>() {
 
 				@Override
