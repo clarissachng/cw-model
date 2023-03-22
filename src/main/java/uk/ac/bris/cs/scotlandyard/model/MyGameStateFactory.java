@@ -7,6 +7,7 @@ import java.util.*;
 
 import javax.annotation.Nonnull;
 import javax.crypto.spec.PSource;
+import javax.swing.text.html.Option;
 
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
@@ -207,15 +208,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.of();
 		}
 
-		public boolean noDetectiveHasMove(List<Player> detectives){
-			for (Player detective : detectives){
-				// check if there are available moves for any of the detectives
-				if (!makeSingleMoves(setup, detectives, detective, detective.location()).isEmpty()){
-					return false;
-				}
-			}
-			return true;
-		}
+
 
 		/**
 		 * return the current available moves of the game.
@@ -384,11 +377,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				updatedRemaining.add(updatedMrX.piece());
 			}
 
-			return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(updatedLog), mrX, detectives);
+			// return a new game state with all the updated states
+			return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(updatedLog), updatedMrX, updatedDetectives);
 		}
 
 		/* --------------- HELPER FUNCTIONS   ----------- */
 
+		// helper function for advance
 		// gets the player from its piece (detective/ Mr X) --> player to piece
 		private Player getCurrentPlayer(Piece piece){
 			for (Player p: allPlayers) {
@@ -397,6 +392,19 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return null;
 		}
 
+		// helper function for getWinner()
+		public boolean noDetectiveHasMove(List<Player> detectives){
+			for (Player detective : detectives){
+				// check if there are available moves for any of the detectives
+				if (!makeSingleMoves(setup, detectives, detective, detective.location()).isEmpty()){
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// helper function for makeDoubleMoves:
+		// gets the destination after making each single moves
 		public static Integer getDestination(Move m) {
 			return m.accept(new Move.Visitor<>() {
 
