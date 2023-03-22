@@ -251,7 +251,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull @Override
 		public GameState advance(Move move) {
 			// error handling
-			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
+			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 
 			// initialise lists for the things that needs to be updated: log, players, remaining, moves
 			List<LogEntry> updatedLog = new ArrayList<>(log); // can store the updated moves for mr x
@@ -266,7 +266,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				Player currentPlayer = getCurrentPlayer(move.commencedBy());
 				@Override
 				public Player visit(Move.SingleMove move) {
-					currentPlayer.use(move.ticket).at(move.destination);
+					Player newPlayer = currentPlayer.use(move.ticket).at(move.destination);
 					// when the current player is Mr X
 					if(currentPlayer.isMrX()) {
 						// check if mr x's moves are revealed
@@ -281,13 +281,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						// give mr x with new ticket from detectives
 						mrX = mrX.give(move.tickets());
 					}
-					return currentPlayer;
+					return newPlayer;
 				}
 
 				// probably need to look into the 4 possible cases for double move
 				@Override
 				public Player visit(Move.DoubleMove move) {
-					currentPlayer.use(move.tickets()).at(move.destination2);
+					Player newPlayer = currentPlayer.use(move.tickets()).at(move.destination2);
+
+					// if moves[rounds] == true, so mrx should reveal his moves
 
 					// case1: reveal + reveal
 					if (setup.moves.get(log.size()) && setup.moves.get(log.size() + 1)) {
@@ -312,13 +314,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						updatedLog.add(LogEntry.hidden(move.ticket2));
 					}
 
-					return currentPlayer;
+					return newPlayer;
 				}
 			};
 
 			Player newPlayer = move.accept(visitor);
 
-			// only update newDetectives if newPlayer is a detective
+			// only update updatedDetectives if newPlayer is a detective
 			for (Player p : detectives) {
 				if (p.piece() == newPlayer.piece()) {
 					updatedDetectives.add(newPlayer);
@@ -327,7 +329,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			}
 
-			// exclude the piece moved for remaining
+			// if the p didnt make any moves
+			// add the p into the new remaining for the new round
 			for (Piece p : remaining) {
 				if (p != newPlayer.piece()) {
 					updatedRemaining.add(p);
@@ -335,6 +338,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			// check if the new player is mr x
+			// if true, store the updatedPlayer to updatedMrX
+			// else, update updatedMrX with mrX
 			if (newPlayer.isMrX()) {
 				updatedMrX = newPlayer;
 			} else {
@@ -342,7 +347,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			//  remaining pieces in play for the current round
-			// in the beginning of each round, only mr x is in the remaining
 			if(!move.commencedBy().isMrX()) {
 				for(Piece player : oldRemaining) {
 					if(player != move.commencedBy()) {
@@ -350,10 +354,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 				}
 			}
-			//  (and if none remain an initialisation of players for the next round).
+			// if none, remain an initialisation of players for the next round
 			else {
-				for(Player everyone : allPlayers) {
-					updatedRemaining.add(everyone.piece());
+				for(Player detective : detectives) {
+					updatedRemaining.add(detective.piece());
 				}
 			}
 
@@ -363,7 +367,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     //The game is not over if MrX is cornered, but he can still
 					// escape using a double move, or secret move
 					if(makeSingleMoves(setup, updatedDetectives, player, player.location()).isEmpty()
-							&& !makeDoubleMoves(setup, updatedDetectives, updatedMrX, updatedMrX.location(), ImmutableList.copyOf(updatedLog)).isEmpty() ) {
+							&& !makeDoubleMoves(setup, updatedDetectives, updatedMrX, updatedMrX.location(),
+							ImmutableList.copyOf(updatedLog)).isEmpty() ) {
 						updatedRemaining.add(updatedMrX.piece());
 					}
 				} else {
@@ -374,6 +379,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			}
 
+			// in the beginning of each round, only mr x is in the remaining
 			if (updatedRemaining.isEmpty()) {
 				updatedRemaining.add(updatedMrX.piece());
 			}
