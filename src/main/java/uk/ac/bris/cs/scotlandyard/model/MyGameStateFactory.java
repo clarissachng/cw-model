@@ -246,9 +246,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		// return a new state from the current GameState and a provided Move
+		// what we have to do in this one:
+		// check whether moves are revealed/ hidden + update remaining, moves
 		@Nonnull @Override
 		public GameState advance(Move move) {
+			// error handling
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
+
+			// initialise lists for the things that needs to be updated: log, players, remaining, moves
 			List<LogEntry> updatedLog = new ArrayList<>(log);
 			List<Player> updatedDetectives = new ArrayList<>();
 			Player updatedMrX;
@@ -257,6 +262,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			Move.Visitor<Player> visitor = new Move.Visitor<>() {
 
+				// gets whether the current player is detective or mr x
 				Player currentPlayer = getCurrentPlayer(move.commencedBy());
 				@Override
 				public Player visit(Move.SingleMove move) {
@@ -278,6 +284,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					return currentPlayer;
 				}
 
+				// probably need to look into the 4 possible cases for double move
 				@Override
 				public Player visit(Move.DoubleMove move) {
 					currentPlayer.use(move.tickets()).at(move.destination2);
@@ -319,7 +326,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			}
 
-			// dont understand
+			// check if the new player is mr x
 			if (newPlayer.isMrX()) {
 				updatedMrX = newPlayer;
 			} else {
@@ -327,6 +334,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			//  remaining pieces in play for the current round
+			// in the beginning of each round, only mr x is in the remaining
 			if(!move.commencedBy().isMrX()) {
 				for(Piece player : oldRemaining) {
 					if(player != move.commencedBy()) {
@@ -341,12 +349,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			}
 
-			// dont understand
 			for(Piece p : remaining) {
 				Player player = getCurrentPlayer(p);
 				if(p.isMrX()) {
-                    /* The game is not over if MrX is cornered, but he can still escape
-                       can scape using a double move, or secret */
+                    //The game is not over if MrX is cornered, but he can still
+					// escape using a double move, or secret move
 					if(makeSingleMoves(setup, updatedDetectives, player, player.location()).isEmpty()
 							&& !makeDoubleMoves(setup, updatedDetectives, updatedMrX, updatedMrX.location(), ImmutableList.copyOf(updatedLog)).isEmpty() ) {
 						updatedRemaining.add(updatedMrX.piece());
@@ -368,7 +375,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		/* --------------- HELPER FUNCTIONS   ----------- */
 
-		// gets the player from its piece (detective/ Mr X)
+		// gets the player from its piece (detective/ Mr X) --> player to piece
 		private Player getCurrentPlayer(Piece piece){
 			for (Player p: allPlayers) {
 				if(p.piece().equals(piece)) return p;
