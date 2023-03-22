@@ -254,7 +254,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 
 			// initialise lists for the things that needs to be updated: log, players, remaining, moves
-			List<LogEntry> updatedLog = new ArrayList<>(log);
+			List<LogEntry> updatedLog = new ArrayList<>(log); // can store the updated moves for mr x
 			List<Player> updatedDetectives = new ArrayList<>();
 			Player updatedMrX;
 			List<Piece> oldRemaining = new ArrayList<>(remaining);
@@ -311,7 +311,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						updatedLog.add(LogEntry.hidden(move.ticket1));
 						updatedLog.add(LogEntry.hidden(move.ticket2));
 					}
-					1
+
 					return currentPlayer;
 				}
 			};
