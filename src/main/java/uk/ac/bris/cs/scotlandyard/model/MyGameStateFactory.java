@@ -289,21 +289,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				public Player visit(Move.DoubleMove move) {
 					currentPlayer.use(move.tickets()).at(move.destination2);
 
-					// moving from source to destination1
-					if (setup.moves.get(log.size())) {
+					// case1: reveal + reveal
+					if (setup.moves.get(log.size()) && setup.moves.get(log.size() + 1)) {
 						updatedLog.add(LogEntry.reveal(move.ticket1, move.destination1));
-					}
-					else {
-						updatedLog.add(LogEntry.hidden(move.ticket1));
-					}
-
-					// moving from destination1 to destination2
-					if (setup.moves.get(updatedLog.size())) {
 						updatedLog.add(LogEntry.reveal(move.ticket2, move.destination2));
 					}
-					else {
+
+					// case2: reveal + hidden
+					else if (setup.moves.get(log.size())){
+						updatedLog.add(LogEntry.reveal(move.ticket1, move.destination1));
 						updatedLog.add(LogEntry.hidden(move.ticket2));
 					}
+						// case3: hidden + reveal
+					else if (setup.moves.get(log.size() + 1)) {
+						updatedLog.add(LogEntry.hidden(move.ticket1));
+						updatedLog.add(LogEntry.reveal(move.ticket2, move.destination2));
+					}
+
+					// case4: hidden + hidden
+					else {
+						updatedLog.add(LogEntry.hidden(move.ticket1));
+						updatedLog.add(LogEntry.hidden(move.ticket2));
+					}
+					1
 					return currentPlayer;
 				}
 			};
