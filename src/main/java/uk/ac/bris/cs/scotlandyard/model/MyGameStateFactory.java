@@ -384,7 +384,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		/* --------------- HELPER FUNCTIONS   ----------- */
 
 		// helper function for advance
-		// gets the player from its piece (detective/ Mr X) --> player to piece
+		// gets the player from its piece (detective/ Mr X) --> piece to player
 		private Player getCurrentPlayer(Piece piece){
 			for (Player p: allPlayers) {
 				if(p.piece().equals(piece)) return p;
